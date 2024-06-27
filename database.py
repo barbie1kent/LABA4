@@ -13,35 +13,38 @@ engine = create_engine(DATABASE_URL)
 class Base(DeclarativeBase): ...
 
 class Product(Base):
-    __tablename__ = 'product'
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    product_name = Column(String(50))
+    __tablename__ = 'products'
+    code = Column(Integer, primary_key=True)
+    name = Column(String)
     price = Column(Float)
+    orders = relationship("Order", back_populates="product")
+    shipments = relationship("Shipment", secondary="shipment_product", back_populates="products")
 
 class Order(Base):
-    __tablename__ = 'order'
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    customer_name = Column(String(50))
-    customer_address = Column(String(100))
-    customer_phone = Column(String(12))
-    contract_number = Column(String(4))
+    __tablename__ = 'orders'
+    code = Column(Integer, primary_key=True)
+    customer_name = Column(String)
+    customer_address = Column(String)
+    customer_phone = Column(String)
+    contract_number = Column(String)
     contract_date = Column(Date)
-    planned_quantity = Column(Integer)
-    product_id = Column(Integer, ForeignKey('products.id'))
-
-    product = relationship("Product")
+    product_code = Column(Integer, ForeignKey('products.code'))
+    planned_delivery = Column(Integer)
+    product = relationship("Product", back_populates="orders")
 
 class Shipment(Base):
-    __tablename__ = 'shipment'
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    __tablename__ = 'shipments'
+    code = Column(Integer, primary_key=True)
+    order_code = Column(Integer, ForeignKey('orders.code'))
     shipment_date = Column(Date)
     shipped_quantity = Column(Integer)
-    order_id = Column(Integer, ForeignKey('orders.id'))
+    products = relationship("Product", secondary="shipment_product", back_populates="shipments")
 
-    order = relationship("Order")
+# Association Table for many-to-many relationship between Product and Shipment
+class ShipmentProduct(Base):
+    __tablename__ = 'shipment_product'
+    shipment_code = Column(Integer, ForeignKey('shipments.code'), primary_key=True)
+    product_code = Column(Integer, ForeignKey('products.code'), primary_key=True)
 
 
 
